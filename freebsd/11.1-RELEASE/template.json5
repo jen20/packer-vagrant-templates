@@ -5,7 +5,7 @@
 
 		cpus: "1",
 		memory: "512",
-		root_volume_size: "4096",
+		root_volume_size: "16384",
 
 		iso_url: "{{ env `ISO_URL` }}",
 		iso_md5: "{{ env `ISO_MD5` }}",
