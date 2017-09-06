@@ -13,7 +13,15 @@ Vagrant.configure("2") do |config|
 		freebsd__nfs_options: ['nolockd'],
 		disable_usable_check: true
 
-	config.vm.provider :vmware_fusion do |v|
+	config.vm.provider "vmware_fusion" do |v|
 		v.vmx["ethernet0.virtualDev"]  = "e1000"
+	end
+
+	config.vm.provider "virtualbox" do |v, override|
+		override.vm.network "private_network", type: "dhcp"
+
+		v.customize ["modifyvm", :id, "--audio", "none"]
+		v.customize ["modifyvm", :id, "--hwvirtex", "on"]
+		v.customize ["modifyvm", :id, "--ioapic", "on"]
 	end
 end

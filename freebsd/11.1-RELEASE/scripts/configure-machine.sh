@@ -26,15 +26,25 @@ sh -c 'cd /tmp && exec pkg-static upgrade -n'
 echo '    * Initializing pkg(1) audit database'
 sh -c 'cd /tmp && exec pkg-static audit -F'
 
-echo '    * Installing OpenVM Tools'
-pkg-static install -y open-vm-tools-nox11
-sysrc vmware_guest_vmblock_enable=YES
-sysrc vmware_guest_vmmemctl_enable=YES
-sysrc vmware_guest_vmxnet_enable=YES
-# Disable vmxnet in favor of whatever the OpenVM Tools are suggesting
-#sed -i -e 's#^ifconfig_vmx0#ifconfig_em0#g' /etc/rc.conf
-#sed -i -e '/^if_vmx_load=.*/d' /boot/loader.conf
-sysrc vmware_guestd_enable=YES
+echo '    * Setting up VM Tools...'
+printf "      Packer Builder Type: %s\n" "${PACKER_BUILDER_TYPE}"
+
+if [ "$PACKER_BUILDER_TYPE" = 'vmware-iso' ]; then
+	echo '    * Installing OpenVM Tools'
+	pkg-static install -y open-vm-tools-nox11
+	sysrc vmware_guest_vmblock_enable=YES
+	sysrc vmware_guest_vmmemctl_enable=YES
+	sysrc vmware_guest_vmxnet_enable=YES
+	sysrc vmware_guestd_enable=YES
+elif [ "${PACKER_BUILDER_TYPE}" = 'virtualbox-iso' ]; then
+	echo '    * Installing Virtualbox Guest Additions'
+	pkg-static install -y virtualbox-ose-additions-nox11	
+	sysrc vboxguest_enable="YES"
+        sysrc vboxservice_flags="--disable-timesync"
+	sysrc vboxservice_enable="YES"
+else
+	echo "      Unknown VM type - not installing tools"
+fi
 
 echo '    * Setting up passwordless sudo for vagrant user'
 pkg-static install -y sudo
