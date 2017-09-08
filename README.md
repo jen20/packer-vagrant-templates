@@ -2,7 +2,9 @@
 
 A variety of minimal Packer templates for Vagrant boxes for VMWare Fusion/Desktop, written in JSON5.
 
-Use [cfgt](github.com/sean-/cfgt) to convert JSON5 into JSON for Packer.
+Use [cfgt](github.com/sean-/cfgt) to convert JSON5 into JSON for Packer. A generated version of the
+JSON is included for use with Atlas, though not all boxes are likely to build correctly with Atlas
+(specifically those which do perfectly acceptable but unusual things with network interfaces).
 
 ### SmartOS - Global Zone
 
