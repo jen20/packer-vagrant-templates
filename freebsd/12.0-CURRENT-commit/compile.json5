@@ -1,0 +1,186 @@
+{
+	variables: {
+		source_archive_url: "{{ env `SOURCE_ARCHIVE_URL` }}",
+		kernel_config: "{{ env `KERNCONF` }}",
+
+		cpus: "8",
+		memory: "12288",
+		root_volume_size: "16384",
+		hostname: "freebsd",
+
+		iso_url: "{{ env `ISO_URL` }}",
+		iso_md5: "{{ env `ISO_MD5` }}",
+	},
+	builders: [{
+		type: "vmware-iso",
+		name: "FreeBSD-12.0-CURRENT-{{ user `kernel_config` }}-Compile",
+
+		iso_url: "{{ user `iso_url` }}",
+		iso_checksum: "{{ user `iso_md5` }}",
+		iso_checksum_type: "md5",
+
+		disk_size: "{{ user `root_volume_size` }}",
+		
+		guest_os_type: "freebsd-64",
+		shutdown_command: "poweroff; poweroff",
+		headless: false,
+
+		version: "12",
+		vm_name: "{{ user `name` }}",
+		vmdk_name: "{{ user `name` }}_Root",
+		vmx_data: {
+			"memsize": "{{ user `memory` }}",
+			"numvcpus": "{{ user `cpus` }}",
+			"mce.enable": "TRUE",
+			"vhu.enable": "TRUE",
+			"vhv.enable": "TRUE",
+			"vpmc.enable": "TRUE",
+		},
+
+		communicator: "ssh",
+		ssh_username: "root",
+		ssh_password: "vagrant",
+		ssh_pty: "true",
+		ssh_wait_timeout: "30s",
+
+		boot_wait: "45s",
+		boot_command: [
+			// Welcome.  Install.
+			"I<wait>",
+
+			// Keymap Selection
+			"<enter><wait>",
+
+			// Set Hostname
+			"{{user `hostname`}}",
+			"<enter><wait>",
+
+			// Distribution Select
+			"l<wait>l<wait><spacebar>", // Disable lib32
+			"p<wait><spacebar><enter><wait>", //Disable ports tree
+
+			// Partitioning
+			"<down><down><down>", // Highlight "Auto (ZFS)"
+			"<enter><wait>",
+
+			// ZFS (ignore temporary disks)
+			"T<enter><wait><enter><wait>", // Stripe
+			"<spacebar><enter><wait>", // Toggle `da0`
+			"<up><enter><wait>Y<wait>", //Install
+
+			// Wait for the installation to complete. 
+			"<wait10><wait10><wait10><wait10><wait10>",
+			"<wait10><wait10><wait10><wait10><wait10>",
+
+			// Password
+			"vagrant<enter><wait>", // Enter password for the root account
+			"vagrant<enter><wait>", // Re-enter the password for the root account
+
+			// Network Configuration
+			"<enter><wait>", // Select `vmx0`
+
+			// Network Configuration
+			"Y<wait>", // Enable IPv4 configuration
+			"Y", // Select DHCP
+			"<wait10><wait10>", // Wait to acquire a DHCP address
+			"N<wait>", // Enable IPv6 configuration
+			"<enter><wait>", // Accept DNS settings from DHCP
+
+			// Time Zone Selector
+			"a", // Select UTC
+			"<enter><enter><wait>", // Confirm time zone selection
+
+			// Time & Date
+			"<enter><wait>", // Skip Date
+			"<enter><wait>", // Skip Time
+
+			// System Configuration
+			"<enter><wait>", // Accept defaults (only ssh, dumpdev)
+
+			// System Hardening
+			"R<spacebar><wait>", // Randomize PID
+			"I<spacebar><wait>", // Insert stack guard
+			"C<spacebar><wait>", // Clean /tmp
+			"D<spacebar><wait>", // Disable syslogd network socket
+			"D<spacebar><wait>", // Disable sendmail service
+			"<enter><wait>", // Accept hardening choices
+
+			// Add User Accounts
+			"Y<wait>",
+
+			// Create vagrant user
+			"vagrant", // Username
+			"<enter><wait>",
+			"Vagrant User", // Full Name
+			"<enter><wait>",
+			"<enter><wait>", // UID
+			"<enter><wait>", // Login Group
+			"wheel", // Auxiliary Group
+			"<enter><wait>",
+			"<enter><wait>", // Login Class
+			"<enter><wait>", // Accept sh as login shell
+			"<enter><wait>",
+			"0700", // Home Directory mode
+			"<enter><wait>",
+			"Y", // Use password based authentication
+			"<enter><wait>",
+			"N", // Use empty password
+			"<enter><wait>",
+			"N", // Use random password
+			"<enter><wait>",
+			"vagrant", // Enter password
+			"<enter><wait>",
+			"vagrant", // Re-enter password
+			"<enter><wait>",
+			"N", // Lock account after create
+			"<enter><wait>",
+			"Y", // Look reasonable
+			"<enter><wait>",
+			"N", // Add another user
+			"<enter><wait>",
+
+			// System configuration
+			"<enter>", // Select Exit
+			"<wait10><wait10><wait10><wait10><wait10><wait10>", // Wait for disk to flush
+
+			// Manual Configuration
+			"Y<enter><wait>", // Highlight Yes
+
+			// Shell prompt
+			"sed -i -e 's/^#PermitRootLogin no/PermitRootLogin yes/' /etc/ssh/sshd_config<enter><wait>",
+			"echo 'autoboot_delay=\"-1\"' >> /boot/loader.conf<enter><wait>",
+			"echo 'if_vmx_load=\"YES\"' >> /boot/loader.conf<enter><wait>",
+			"chsh -s sh root<enter><wait>",
+			"exit<enter><wait>",
+
+			// Complete
+			"R", // Select Reboot
+			"<wait10><wait10><wait10><wait10><wait10>", // Wait for disk to flush
+		],
+	}],
+	provisioners: [
+		{
+			type: "shell",
+			scripts: [
+				"scripts/zfs-setup.sh",
+				"scripts/configure-machine.sh",
+			],
+		},
+		{
+			type: "shell",
+			script: "scripts/compile-new-iso.sh",
+			start_retry_timeout: "5m",
+			pause_before: "30s",
+			environment_vars: [
+				"PACKER_SOURCE_ARCHIVE_URL={{ user `source_archive_url` }}",
+				"PACKER_KERNEL_CONFIG={{ user `kernel_config` }}",
+			],
+		},
+		{
+			type: "file",
+			direction: "download",
+			source: "/compile/freebsd-source/release/disc1.iso",
+			destination: "FreeBSD-12.0-CURRENT-{{ user `kernel_config` }}-disc1.iso",
+		},
+	],
+}
