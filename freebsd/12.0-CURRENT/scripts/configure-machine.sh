@@ -5,16 +5,16 @@ set -e
 echo '==> Configuring Machine...'
 
 echo '    * Bootstrapping pkg(1)'
-ASSUME_ALWAYS_YES=yes pkg bootstrap
+env ASSUME_ALWAYS_YES=yes pkg bootstrap -f
 
 echo '    * Updating pkg(1) database'
-sh -c 'cd /tmp && exec pkg-static update'
+sh -c 'cd /tmp && exec pkg-static -o OSVERSION=1200056 update'
 
 echo '    * Upgrading pkg(1) database'
-sh -c 'cd /tmp && exec pkg-static upgrade -n'
+sh -c 'cd /tmp && exec pkg-static -o OSVERSION=1200056 upgrade -n'
 
 echo '    * Initializing pkg(1) audit database'
-sh -c 'cd /tmp && exec pkg-static audit -F'
+sh -c 'cd /tmp && exec pkg-static -o OSVERSION=1200056 audit -F'
 
 echo '    * Installing root CA package'
 pkg install -y security/ca_root_nss
@@ -29,31 +29,20 @@ cat <<'EOF' >> /boot/loader.conf
 kern.hz=50
 EOF
 
-echo '    * Bootstrapping pkg(1)'
-ASSUME_ALWAYS_YES=yes pkg bootstrap
-
-echo '    * Updating pkg(1) database'
-sh -c 'cd /tmp && exec pkg-static update'
-
-echo '    * Upgrading pkg(1) database'
-sh -c 'cd /tmp && exec pkg-static upgrade -n'
-
-echo '    * Initializing pkg(1) audit database'
-sh -c 'cd /tmp && exec pkg-static audit -F'
-
 echo '    * Setting up VM Tools...'
-printf "      Packer Builder Type: %s\n" "${PACKER_BUILDER_TYPE}"
+printf "      Packer Builder Type: %s" "${PACKER_BUILDER_TYPE}"
+echo
 
 if [ "$PACKER_BUILDER_TYPE" = 'vmware-iso' ]; then
 	echo '    * Installing OpenVM Tools'
-	pkg-static install -y open-vm-tools-nox11
+	pkg install -y open-vm-tools-nox11
 	sysrc vmware_guest_vmblock_enable=YES
 	sysrc vmware_guest_vmmemctl_enable=YES
 	sysrc vmware_guest_vmxnet_enable=YES
 	sysrc vmware_guestd_enable=YES
 elif [ "${PACKER_BUILDER_TYPE}" = 'virtualbox-iso' ]; then
 	echo '    * Installing Virtualbox Guest Additions'
-	pkg-static install -y virtualbox-ose-additions-nox11	
+	pkg install -y virtualbox-ose-additions-nox11
 	sysrc vboxguest_enable="YES"
         sysrc vboxservice_flags="--disable-timesync"
 	sysrc vboxservice_enable="YES"
@@ -64,7 +53,7 @@ else
 fi
 
 echo '    * Setting up passwordless sudo for vagrant user'
-pkg-static install -y sudo
+pkg install -y sudo
 echo 'vagrant ALL=(ALL) NOPASSWD: ALL' > /usr/local/etc/sudoers.d/vagrant
 
 echo '    * Setting up vagrant default SSH key'
