@@ -35,6 +35,8 @@
 			"vhv.enable": "TRUE",
 			"vpmc.enable": "TRUE",
 			"tools.syncTime": "FALSE",
+			"ethernet0.virtualDev": "vmxnet3",
+			"ethernet0.pciSlotNumber": "32",
 		},
 
 		communicator: "ssh",

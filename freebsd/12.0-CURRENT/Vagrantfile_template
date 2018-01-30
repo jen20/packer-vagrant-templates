@@ -14,7 +14,8 @@ Vagrant.configure("2") do |config|
 		disable_usable_check: true
 
 	config.vm.provider "vmware_fusion" do |v|
-		v.vmx["ethernet0.virtualDev"]  = "e1000"
+		v.vmx["ethernet0.virtualDev"]  = "vmxnet3"
+		v.vmx["ethernet0.pciSlotNumber"] = "32"
 		v.whitelist_verified = true
 	end
 
