@@ -60,7 +60,8 @@
 			// Distribution Select
 			"k<wait><spacebar>", // Disable kernel-dbg
 			"l<wait>l<wait><spacebar>", // Disable lib32
-			"p<wait><spacebar>", // Disable ports tree
+			// Current builds don't have the ports tree
+			//"p<wait><spacebar>", // Disable ports tree
 			"<enter>",
 
 			// Partitioning
@@ -84,6 +85,7 @@
 			"<wait10><wait10><wait10><wait10><wait10>",
 			"<wait10><wait10><wait10><wait10><wait10>",
 			"<wait10><wait10><wait10><wait10><wait10>",
+			"<wait10><wait10><wait10><wait10><wait10>",
 
 			// Password
 			"vagrant<enter><wait>", // Enter password for the root account
@@ -95,7 +97,7 @@
 			// Network Configuration
 			"<enter><wait>", // Enable IPv4 configuration
 			"<enter>", // Select DHCP
-			"<wait10><wait10>", // Wait to acquire a DHCP address
+			"<wait10><wait10><wait10>", // Wait to acquire a DHCP address
 			"N<wait>", // Enable IPv6 configuration
 			"<enter><wait>", // Accept DNS settings from DHCP
 
@@ -164,6 +166,8 @@
 			"sed -i -e 's/^#PermitRootLogin no/PermitRootLogin yes/' /etc/ssh/sshd_config<enter><wait>",
 			"echo 'autoboot_delay=\"-1\"' >> /boot/loader.conf<enter><wait>",
 			"chsh -s sh root<enter><wait>",
+			"rm -f /etc/devd/devmatch.conf<enter><wait>",
+			"touch /etc/devd/devmatch.conf<enter><wait>",
 			"exit<enter><wait>",
 
 			// Complete

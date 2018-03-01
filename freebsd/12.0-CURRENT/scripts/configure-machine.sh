@@ -8,13 +8,13 @@ echo '    * Bootstrapping pkg(1)'
 env ASSUME_ALWAYS_YES=yes pkg bootstrap -f
 
 echo '    * Updating pkg(1) database'
-sh -c 'cd /tmp && exec pkg-static -o OSVERSION=1200056 update'
+sh -c 'cd /tmp && exec pkg update'
 
 echo '    * Upgrading pkg(1) database'
-sh -c 'cd /tmp && exec pkg-static -o OSVERSION=1200056 upgrade -n'
+sh -c 'cd /tmp && exec pkg upgrade -n'
 
 echo '    * Initializing pkg(1) audit database'
-sh -c 'cd /tmp && exec pkg-static -o OSVERSION=1200056 audit -F'
+sh -c 'cd /tmp && exec pkg audit -F'
 
 echo '    * Installing root CA package'
 pkg install -y security/ca_root_nss
